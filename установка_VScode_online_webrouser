@@ -1,0 +1,50 @@
+curl -fOL https://github.com/coder/code-server/releases/download/v4.6.0/code-server_4.6.0_amd64.deb
+sudo dpkg -i code-server_4.6.0_amd64.deb
+sudo systemctl enable --now code-server@$USER
+
+Установите криптостойкий пароль в качестве значения параметра password.
+После этого файл ~/.config/code-server/config.yaml должен выглядеть вот так:
+
+cat .config/code-server/config.yaml
+
+bind-addr: 127.0.0.1:8080
+auth: password
+password: <КРИПТОСТОЙКИЙ ПАРОЛЬ>
+cert: false 
+
+#сгенерировать пароль
+openssl rand -base64 30
+
+Перезапустить
+sudo systemctl restart code-server@$USER
+
+Настройте защищенное соединение для сервера. Для этого выпустите LetsEncrypt сертификат для сервера и поставьте перед Visual Studio Code Server nginx.
+
+sudo apt update
+sudo apt install -y nginx certbot python3-certbot-nginx
+
+Для получения доменного имени воспользуйтесь одним из бесплатных DNS сервисов, например sslip.io. Также вы можете использовать свой домен. Мы для нашей удаленной рабочей станции возьмём доменное имя code.51.250.6.132.sslip.io , где 51.250.6.132 - внешний IP адрес нашей виртуальной машины.
+Создайте файл /etc/nginx/sites-available/code-server со следующим содержимым:
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name code.<IP>.sslip.io;
+
+    location / {
+      proxy_pass http://localhost:8080/;
+      proxy_set_header Host $host;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection upgrade;
+      proxy_set_header Accept-Encoding gzip;
+    }
+}
+
+Активируйте и выпустите LetsEncrypt сертификат для nginx конфига:
+
+sudo ln -s ../sites-available/code-server /etc/nginx/sites-enabled/code-server
+sudo certbot --non-interactive --redirect --agree-tos --nginx -d code.<IP>.sslip.io -m <YOUR_EMAIL>
+
+После завершения конфигурации подключитесь к Visual Studio Code Server по адресу https://code.<IP>.sslip.io/ , введите ваш <КРИПТОСТОЙКИЙ ПАРОЛЬ> и откройте терминал с помощью сочетания клавиш
+
+Ctrl + Shift + ` 

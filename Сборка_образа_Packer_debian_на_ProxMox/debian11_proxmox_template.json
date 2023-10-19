@@ -1,0 +1,71 @@
+{
+  "builders": [
+    {
+      "boot_command": [
+        "<esc><wait>",
+        "install <wait>",
+        " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg <wait>",
+        "debian-installer=en_US.UTF-8 <wait>",
+        "auto <wait>",
+        "locale=en_US.UTF-8 <wait>",
+        "kbd-chooser/method=us <wait>",
+        "keyboard-configuration/xkb-keymap=us <wait>",
+        "netcfg/get_domain=vagrantup.com <wait>",
+        "fb=false <wait>",
+        "debconf/frontend=noninteractive <wait>",
+        "console-setup/ask_detect=false <wait>",
+        "console-keymaps-at/keymap=us <wait>",
+        "grub-installer/bootdev=/dev/sda <wait>",
+        "<enter><wait>"
+      ],
+      "type": "proxmox-iso",
+      "proxmox_url": "https://< IP >:8006/api2/json",   //
+      "insecure_skip_tls_verify": true,
+      "username": "< USERNAME >@pam", //
+      "password": "< PASSWORD >",     //
+      "node": "debian-proxmox",       // имя ноды в проксмосе
+      "network_adapters": [
+        {
+          "model": "virtio",
+          "bridge": "vmbr0"
+        }
+      ],
+      "disks": [
+        {
+          "type": "scsi",
+          "disk_size": "10G",
+          "storage_pool": "< PATH_ >" // куда сохраняется диск
+        }
+      ],
+      "efi_config": {
+          "efi_storage_pool": "< PATH_ >", // куда сохраняется диск
+          "pre_enrolled_keys": true,
+          "efi_type": "4m"
+      },
+      "http_directory": "http",
+      "iso_urls": [
+        "iso-cd/debian-11.3.0-amd64-netinst.iso",
+        "https://cdimage.debian.org/cdimage/archive/11.3.0/amd64/iso-cd/debian-11.3.0-amd64-netinst.iso"
+      ],
+      "iso_checksum": "sha256:7892981e1da216e79fb3a1536ce5ebab157afdd20048fe458f2ae34fbc26c19b",
+      "iso_storage_pool": "local",          
+      "ssh_password": "vagrant",           //
+      "ssh_port": 22,
+      "ssh_timeout": "10000s",
+      "ssh_username": "vagrant",          //
+      "template_name": "Debian-user1",   //
+      "template_description": "Fedora 29-1.2, generated on {{ isotime \"2006-01-02T15:04:05Z\" }}"
+    }
+  ],
+
+	"provisioners": [
+    {
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "scripts/docker_nginx.sh",
+      "type": "shell"
+    }
+  ],
+  "variables": {
+    "version": ""
+  }
+}
